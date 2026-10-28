@@ -779,6 +779,10 @@
   var autoCropBtn = document.getElementById('autoCropBtn');
   var generateBtn = document.getElementById('generateBtn');
   var downloadBtn = document.getElementById('downloadBtn');
+  var cropActions = document.getElementById('cropActions');
+  var resultActions = document.getElementById('resultActions');
+  var reCropBtn = document.getElementById('reCropBtn');
+  var downloadBtn2 = document.getElementById('downloadBtn2');
   var emptyBox = document.getElementById('emptyBox');
   var cropBox = document.getElementById('cropBox');
   var cropCanvas = document.getElementById('cropCanvas');
@@ -1001,18 +1005,21 @@
 
   function showEmpty() {
     emptyBox.style.display = 'flex'; emptyBox.hidden = false;
-    cropBox.hidden = true; stage.hidden = true; stageMeta.hidden = true;
-    generateBtn.disabled = true; downloadBtn.disabled = true; autoCropBtn.hidden = true;
+    cropBox.hidden = true; cropActions.hidden = true;
+    stage.hidden = true; stageMeta.hidden = true; resultActions.hidden = true;
+    downloadBtn.disabled = true;
   }
   function showCrop() {
     emptyBox.hidden = true; emptyBox.style.display = 'none';
-    cropBox.hidden = false; stage.hidden = true; stageMeta.hidden = true;
-    generateBtn.disabled = false; downloadBtn.disabled = true; autoCropBtn.hidden = false;
+    cropBox.hidden = false; cropActions.hidden = false;
+    stage.hidden = true; stageMeta.hidden = true; resultActions.hidden = true;
+    downloadBtn.disabled = true;
   }
   function showResult() {
     emptyBox.hidden = true; emptyBox.style.display = 'none';
-    cropBox.hidden = true; stage.hidden = false; stageMeta.hidden = false;
-    generateBtn.disabled = false; downloadBtn.disabled = false; autoCropBtn.hidden = false;
+    cropBox.hidden = true; cropActions.hidden = true;
+    stage.hidden = false; stageMeta.hidden = false; resultActions.hidden = false;
+    downloadBtn.disabled = false;
   }
 
   function paint() {
@@ -1040,6 +1047,34 @@
 
   generateBtn.addEventListener('click', generate);
   autoCropBtn.addEventListener('click', autoCrop);
+
+  /* ---- 成品态操作 ---- */
+
+  reCropBtn.addEventListener('click', function () {
+    state.result = null;
+    paint(); // paint 走 else 分支，state.crop 存在 → showCrop
+  });
+
+  function triggerDownload() {
+    if (!state.result) return;
+    try {
+      stage.toBlob(function (blob) {
+        if (!blob) { alert('保存失败，请换 Chrome 或 Edge 再试。'); return; }
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = makeFileName();
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      }, 'image/png');
+    } catch (e) {
+      alert('保存失败，请换 Chrome 或 Edge 再试。');
+    }
+  }
+
+  downloadBtn2.addEventListener('click', triggerDownload);
 
   /* ---- 上传 ---- */
 
@@ -1123,24 +1158,7 @@
     return label + '_' + state.gridSize + 'x' + state.gridSize + '_' + state.maxColors + '色.png';
   }
 
-  downloadBtn.addEventListener('click', function () {
-    if (!state.result) return;
-    try {
-      stage.toBlob(function (blob) {
-        if (!blob) { alert('保存失败，请换 Chrome 或 Edge 再试。'); return; }
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = makeFileName();
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-      }, 'image/png');
-    } catch (e) {
-      alert('保存失败，请换 Chrome 或 Edge 再试。');
-    }
-  });
+  downloadBtn.addEventListener('click', triggerDownload);
 
   paint();
 })();
